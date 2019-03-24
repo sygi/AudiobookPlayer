@@ -11,17 +11,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.hardware.TriggerEvent;
-import android.hardware.TriggerEventListener;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
-import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.support.annotation.RequiresApi;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,23 +28,21 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SeekBar;
-import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GyroscopeCalibrationFragment.SensivityListener {
 
-    private static final String PREFS_NAME = "AudiobookPlayerPrefs2";
+    private static final String PREFS_NAME = "AudiobookPlayerPrefs";
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 51531573;
     private MediaPlayer mMediaPlayer;
-    private Button mStart, mStop, mRevind, mBackward, mForward;
+    private Button mStartStop, mRevind, mFastForward, mCalibration;
     private static final String TAG = MainActivity.class.getSimpleName();
     private SensorManager mSensorManager;
     private Sensor mSensor;
-    private TriggerEventListener mTriggerEventListener;
     private boolean media_started = false;
     private boolean data_set = false;
     private Button mSelect;
@@ -57,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
     private Handler mHandler;
     private TextView mClock;
     private ListView mLastFiles;
+    private SensorEventListener mSensorListener;
+    private Double mGyroscopeSensitivity = 2.0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         setButtons();
-        setupSensor();
+        setupSensor(2.0);
 
         tryReadingUri();
 
@@ -84,21 +81,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setupSensor() {
+    private void setupSensor(Double sensivityLevel) {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        mSensorManager.registerListener(new SensorEventListener() {
+        if (mSensorListener != null) {
+            Log.d(TAG, "unregistering listener");
+            mSensorManager.unregisterListener(mSensorListener);
+        }
+
+        mSensorListener = getSensorListener(sensivityLevel);
+        mSensorManager.registerListener(mSensorListener, mSensor, 1000 * 200);
+    }
+
+    private SensorEventListener getSensorListener(final Double sensivityLevel) {
+        mGyroscopeSensitivity = sensivityLevel;
+        return new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent sensorEvent) {
-                if (sensorEvent.values[2] > 2.){
+                if (sensorEvent.values[2] > sensivityLevel){
                     seek(-7);
                 }
             }
 
             @Override
             public void onAccuracyChanged(Sensor sensor, int i) {}
-        }, mSensor, 1000 * 200);
+        };
     }
 
     private void setTexts() {
@@ -211,19 +219,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setButtons() {
-        mStop = findViewById(R.id.button);
-        mStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "stop clicked");
-                if (media_started && data_set) {
-                    mMediaPlayer.pause();
-                    media_started = false;
-                }
-            }
-        });
-        mStart = findViewById(R.id.button2);
-        mStart.setOnClickListener(new View.OnClickListener() {
+        mStartStop = findViewById(R.id.start_stop);
+        mStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (!data_set) {
@@ -237,18 +234,17 @@ public class MainActivity extends AppCompatActivity {
                 if (!media_started) {
                     mMediaPlayer.start();
                     media_started = true;
+                    mStartStop.setBackgroundResource(R.drawable.ic_pause_circle_outline_black_48dp);
+
+                } else {
+                    mMediaPlayer.pause();
+                    media_started = false;
+                    mStartStop.setBackgroundResource(R.drawable.ic_play_circle_outline_black_24dp);
                 }
             }
         });
 
-        mRevind = findViewById(R.id.button3);
-        mRevind.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-             //   seek(-7);
-            }
-        });
-
+        mRevind = findViewById(R.id.rewind);
         mRevind.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
                 seek(-1);
@@ -256,23 +252,31 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mBackward = findViewById(R.id.button_backward);
-        mBackward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                seek(-60);
+        mRevind = findViewById(R.id.rewind);
+        mRevind.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                seek(-1);
+                return false;
             }
         });
 
-        mForward = findViewById(R.id.button_forward);
-        mForward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                seek(60);
+        mFastForward = findViewById(R.id.fast_forward);
+        mFastForward.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                seek(1);
+                return false;
             }
         });
 
-        mSelect = findViewById(R.id.button4);
+        mCalibration = findViewById(R.id.menu);
+        mCalibration.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCalibrationDialog();
+            }
+        });
+
+        mSelect = findViewById(R.id.select);
         mSelect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -311,6 +315,14 @@ public class MainActivity extends AppCompatActivity {
             return;
         int current = mMediaPlayer.getCurrentPosition();
         mMediaPlayer.seekTo(current + 1000 * difference);
+    }
+
+    void openCalibrationDialog() {
+        DialogFragment newFragment = new GyroscopeCalibrationFragment();  // reanme: ...Dialog
+        Bundle bundle = new Bundle();
+        bundle.putDouble("SENSITIVITY", mGyroscopeSensitivity);
+        newFragment.setArguments(bundle);
+        newFragment.show(getSupportFragmentManager(), "Gyroscope Calibration");
     }
 
     void setUri(Uri myUri) {
@@ -374,5 +386,11 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, uri.toString());
             setUri(uri);
         }
+    }
+
+    @Override
+    public void onSetSensivity(DialogFragment dialog, Double level) {
+        Log.d(TAG, "setting sensivity level " + level.toString());
+        setupSensor(level);
     }
 }
