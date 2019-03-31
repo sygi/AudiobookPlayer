@@ -2,13 +2,16 @@ package ml.sygnowski.ber;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.UriPermission;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.hardware.Sensor;
@@ -48,6 +51,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements GyroscopeCalibrationFragment.SensivityListener {
 
@@ -104,9 +108,11 @@ public class MainActivity extends AppCompatActivity implements GyroscopeCalibrat
 
         setTexts();
 
+
         Boolean overlayDismissed = settings.getBoolean("overlay_dismissed", false);
         if (overlayDismissed){
             mOverlay.setVisibility(View.GONE);
+
         } else {
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -251,18 +257,28 @@ public class MainActivity extends AppCompatActivity implements GyroscopeCalibrat
     private ArrayList<String> previousFiles() {
         final ArrayList<String> list = new ArrayList<String>();
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
         for (int i = 0; i <= 6; ++i) {
-            String file_path = settings.getString(String.format("file_path%d", i), "");
+            String file_id = String.format("file_path%d", i);
+            String file_path = settings.getString(file_id, "");
             Log.d("fp", file_path);
             if (!file_path.equals("")) {
                 Uri uri = Uri.parse(file_path);
-                String a = getFileName(uri);
-                if ((a != null) && (!a.equals(""))) {
-                    list.add(getFileName(uri));
+                // TODO: fix this hack
+                int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                if (checkCallingOrSelfUriPermission(uri, takeFlags) == PackageManager.PERMISSION_DENIED){
+                    Log.d(TAG, "I don't have permissions for a file, removing it from the list");
+                    editor.putString(file_id, "");
+                } else {
+                    String a = getFileName(uri);  // This throws an error when I don't have the URI permission (even if I have the storage permission)
+                    if ((a != null) && (!a.equals(""))) {
+                        list.add(getFileName(uri));
+                    }
                 }
             }
         }
 
+        editor.commit();
         Log.d("previous list", list.toString());
         return list;
     }
@@ -275,7 +291,8 @@ public class MainActivity extends AppCompatActivity implements GyroscopeCalibrat
         }
         else if (scheme.equals("content")) {
             String[] proj = { OpenableColumns.DISPLAY_NAME };
-            Cursor cursor = getApplicationContext().getContentResolver().query(uri, proj, null, null, null);
+            ContentResolver cr = getApplicationContext().getContentResolver();
+            Cursor cursor = cr.query(uri, proj, null, null, null);
             if (cursor != null && cursor.getCount() != 0) {
                 int columnIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
                 cursor.moveToFirst();

@@ -1,5 +1,5 @@
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/vd"
+    android:drawable="@drawable/ic_overlay_to_import2"
     >
     <target
         android:name="rotationGroup"
