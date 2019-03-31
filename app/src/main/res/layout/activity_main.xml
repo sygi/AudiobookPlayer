@@ -3,42 +3,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:id="@+id/root_view"
     android:layout_height="match_parent"
-    tools:context="com.example.sygi.audiobookplayer.MainActivity">
+    tools:context="ml.sygnowski.ber.MainActivity">
 
-    <Button
+    <android.support.v7.widget.AppCompatButton
         android:id="@+id/start_stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="Start"
         android:layout_marginTop="40dp"
-        android:background="@drawable/ic_play_circle_outline_black_24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <android.support.v7.widget.AppCompatButton
         android:id="@+id/rewind"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="32dp"
         android:layout_marginTop="8dp"
+        android:contentDescription="Rewind"
         android:layout_marginEnd="8dp"
-        android:background="@drawable/ic_fast_rewind_black_24dp"
+        android:layout_marginRight="8dp"
+        app:srcCompat="@drawable/ic_fast_rewind_black_24dp"
         app:layout_constraintBottom_toBottomOf="@+id/start_stop"
         app:layout_constraintEnd_toStartOf="@+id/start_stop"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="@+id/start_stop"
         app:layout_constraintVertical_bias="1.0" />
 
-    <Button
+    <android.support.v7.widget.AppCompatButton
         android:id="@+id/fast_forward"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:contentDescription="Fast forward"
         android:layout_marginStart="8dp"
         android:layout_marginRight="24dp"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/ic_fast_forward_black_24dp"
+        app:srcCompat="@drawable/ic_fast_forward_black_24dp"
 
         app:layout_constraintBottom_toBottomOf="@+id/start_stop"
         app:layout_constraintRight_toRightOf="parent"
@@ -46,21 +51,23 @@
         app:layout_constraintTop_toTopOf="@+id/start_stop"
         app:layout_constraintVertical_bias="0.0" />
 
-    <Button
+    <android.support.v7.widget.AppCompatButton
         android:id="@+id/select"
+        android:contentDescription="Open file"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
-        android:background="@drawable/ic_open_in_browser_black_24dp"
+        app:srcCompat="@drawable/ic_open_in_browser_black_24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/menu"
         app:layout_constraintTop_toBottomOf="@+id/rewind" />
 
-    <Button
+    <android.support.v7.widget.AppCompatButton
         android:id="@+id/menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/ic_menu_black_24dp"
+        app:srcCompat="@drawable/ic_menu_black_24dp"
+        android:contentDescription="Settings"
         app:layout_constraintBottom_toBottomOf="@+id/select"
         app:layout_constraintEnd_toStartOf="@+id/select"
         app:layout_constraintHorizontal_bias="0.5"
@@ -72,19 +79,27 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
     <SeekBar
         android:id="@+id/seekBar"
         android:layout_width="0dp"
-        android:layout_height="26dp"
+        android:layout_height="wrap_content"
+        android:minHeight="26dp"
+        android:maxHeight="26dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:progress="0"
+        android:max="10"
         app:layout_constraintEnd_toStartOf="@+id/textClock"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/select" />
@@ -92,11 +107,30 @@
     <TextView
         android:id="@+id/textClock"
         android:layout_width="wrap_content"
-        android:layout_height="24dp"
+        android:layout_height="48dp"
         android:layout_marginTop="8dp"
+        android:layout_marginRight="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/seekBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/seekBar"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.0" />
+
+    <ImageView
+    android:id="@+id/overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/overlay_no_phone"
+        app:srcCompat="@drawable/animation"
+        android:alpha="0.75"
+        android:clickable="true"
+        android:focusable="false"
+        android:scaleType="center"
+        android:contentDescription="Overlay"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="2dp"
+        />
 
 </android.support.constraint.ConstraintLayout>

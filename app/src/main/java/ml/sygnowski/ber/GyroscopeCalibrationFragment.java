@@ -1,35 +1,42 @@
-package com.example.sygi.audiobookplayer;
+package ml.sygnowski.ber;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 
 import static android.content.ContentValues.TAG;
 
 public class GyroscopeCalibrationFragment extends DialogFragment {
 
-    private Button mSeekBar;
+    private SeekBar mSeekBar;
+    private ImageView mBulb;
+    private Handler mHandler;
+    private Runnable mTurnOffLight;
 
     public interface SensivityListener {
         void onSetSensivity(DialogFragment dialog, Double level);
     }
 
+    public void onSeek() {
+        mBulb.setImageResource(R.drawable.light_311118_640);
+
+        mHandler.removeCallbacks(mTurnOffLight);
+        mHandler.postDelayed(mTurnOffLight, 1000);
+    }
+
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout to use as dialog or embedded fragment
+        getDialog().setTitle("Sensitivity");
         View layout = inflater.inflate(R.layout.fragment_gyroscope_callibration, container, false);
-        SeekBar mSeekBar= layout.findViewById(R.id.sensivity);
+        mSeekBar = layout.findViewById(R.id.sensivity);
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
@@ -45,12 +52,22 @@ public class GyroscopeCalibrationFragment extends DialogFragment {
         });
         mSeekBar.setMax(1000);
 
+        mBulb = layout.findViewById(R.id.imageView);
+        mHandler = new android.os.Handler();
+        mTurnOffLight = new Runnable() {
+            public void run() {
+                Log.i("Tag", "Turning lightbulb back off");
+                mBulb.setImageResource(R.drawable.lamp_311117_640);
+            }
+        };
+
         Bundle bundle = getArguments();
         Double startingSensitivity = bundle.getDouble("SENSITIVITY",2.0);
         Log.d(TAG, "starting sensitivity " + startingSensitivity.toString());
 
         Double progressLevel = (5. - startingSensitivity) * 200;
         mSeekBar.setProgress(progressLevel.intValue());
+
         return layout;
     }
 

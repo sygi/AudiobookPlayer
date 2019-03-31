@@ -1,24 +1,31 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+        }
+    }
     compileSdkVersion 26
     defaultConfig {
-        applicationId "com.example.sygi.audiobookplayer"
-        minSdkVersion 21  // todo: 15?
+        applicationId "ml.sygnowski.ber"
+        minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1
+        versionCode 6
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
     }
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    sourceSets { main { res.srcDirs = ['src/main/res', 'src/main/res/closed-source'] } }
 }
 
 dependencies {
